@@ -197,7 +197,12 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
         .unwrap();
     assert_eq!(origin.get::<_, String>(0), "webhook");
     assert!(!origin.get::<_, String>(1).is_empty());
-    assert_eq!(completed.state, RepositoryJobState::Succeeded);
+    assert_eq!(
+        completed.state,
+        RepositoryJobState::Succeeded,
+        "webhook analysis ended with error code {:?}",
+        completed.error_code
+    );
     assert_eq!(completed.pinned_commit.as_deref(), Some(commit.as_str()));
     assert!(worker.run_once().unwrap().is_none());
     let row = sql.query_one("SELECT runtime_tenant_id,runtime_repository_id,snapshot_id FROM repository_bindings WHERE repository_id=$1", &[&repository.id]).unwrap();
