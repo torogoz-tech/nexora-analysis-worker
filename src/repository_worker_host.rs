@@ -1,5 +1,7 @@
 use crate::worker_shutdown::WorkerShutdown;
-use crate::{RabbitMqJobWakeupConsumer, RepositoryWorker, RepositoryWorkerSettings};
+use crate::{
+    RabbitMqJobWakeupConsumer, RepositoryWorker, RepositoryWorkerAttempt, RepositoryWorkerSettings,
+};
 use nexora_analysis_store::GitNetworkPolicy;
 use nexora_platform::{JobKind, PlatformError};
 use nexora_runtime::DatabaseConnections;
@@ -189,13 +191,9 @@ impl RepositoryWorkerHost {
 
     fn drain_analysis_jobs(worker: &mut RepositoryWorker) -> Result<(), PlatformError> {
         loop {
-            match worker.run_analysis_once() {
-                Ok(Some(_)) => {}
-                Ok(None) => return Ok(()),
-                Err(PlatformError::Conflict(
-                    "job lease is no longer current" | "job lease expired during failure recording",
-                )) => {}
-                Err(error) => return Err(error),
+            match worker.run_analysis_attempt()? {
+                RepositoryWorkerAttempt::NoWork => return Ok(()),
+                RepositoryWorkerAttempt::Completed(_) | RepositoryWorkerAttempt::StaleLease => {}
             }
         }
     }

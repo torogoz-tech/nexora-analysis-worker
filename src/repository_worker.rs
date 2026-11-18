@@ -1,5 +1,5 @@
 use crate::{
-    RepositoryWorkerOutcome, RepositoryWorkerSettings,
+    RepositoryWorkerAttempt, RepositoryWorkerOutcome, RepositoryWorkerSettings,
     repository_worker_directory::RepositoryWorkerDirectory,
     repository_worker_heartbeat::RepositoryWorkerHeartbeat,
 };
@@ -51,8 +51,16 @@ impl RepositoryWorker {
         self.run_analysis_once()
     }
     pub fn run_analysis_once(&mut self) -> Result<Option<RepositoryWorkerOutcome>, PlatformError> {
+        match self.run_analysis_attempt()? {
+            RepositoryWorkerAttempt::NoWork | RepositoryWorkerAttempt::StaleLease => Ok(None),
+            RepositoryWorkerAttempt::Completed(outcome) => Ok(Some(outcome)),
+        }
+    }
+    pub(crate) fn run_analysis_attempt(
+        &mut self,
+    ) -> Result<RepositoryWorkerAttempt, PlatformError> {
         let Some(lease) = self.store.claim_repository_job(&self.settings.id, 300)? else {
-            return Ok(None);
+            return Ok(RepositoryWorkerAttempt::NoWork);
         };
         let monitor = AnalysisStore::connect(&self.connections, &self.namespace)?;
         let lost = AtomicBool::new(false);
@@ -73,11 +81,16 @@ impl RepositoryWorker {
             result
         });
         match result {
-            Ok(binding) => Ok(Some(RepositoryWorkerOutcome::published(binding))),
-            Err(failure) => self
-                .store
-                .fail_repository_job(&lease, failure)
-                .map(|job| Some(job.into())),
+            Ok(binding) => Ok(RepositoryWorkerAttempt::Completed(
+                RepositoryWorkerOutcome::published(binding),
+            )),
+            Err(failure) => match self.store.fail_repository_job(&lease, failure) {
+                Ok(job) => Ok(RepositoryWorkerAttempt::Completed(job.into())),
+                Err(PlatformError::Conflict(
+                    "job lease is no longer current" | "job lease expired during failure recording",
+                )) => Ok(RepositoryWorkerAttempt::StaleLease),
+                Err(error) => Err(error),
+            },
         }
     }
     fn checkpoint(
