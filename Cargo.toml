@@ -24,7 +24,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "tim
 zeroize = "1"
 
 [dev-dependencies]
-nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4" }
+nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "2fe37155fd3296757601c75d979f82782c15895e" }
 serde_json = "1"
 postgres = { version = "0.19", features = ["with-serde_json-1"] }
 base64 = "0.22"

@@ -2247,7 +2247,7 @@ dependencies = [
 [[package]]
 name = "nexora-mcp"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4#65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=2fe37155fd3296757601c75d979f82782c15895e#2fe37155fd3296757601c75d979f82782c15895e"
 dependencies = [
  "nexora-core",
  "nexora-graph",
@@ -2289,7 +2289,7 @@ dependencies = [
 [[package]]
 name = "nexora-platform-store"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4#65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=2fe37155fd3296757601c75d979f82782c15895e#2fe37155fd3296757601c75d979f82782c15895e"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -2303,7 +2303,7 @@ dependencies = [
  "nexora-indexer",
  "nexora-language",
  "nexora-platform",
- "nexora-reasoning 0.4.0 (git+https://github.com/torogoz-tech/nexora-api.git?rev=65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4)",
+ "nexora-reasoning 0.4.0 (git+https://github.com/torogoz-tech/nexora-api.git?rev=2fe37155fd3296757601c75d979f82782c15895e)",
  "nexora-retrieval",
  "nexora-runtime",
  "nexora-source",
@@ -2324,10 +2324,11 @@ dependencies = [
 [[package]]
 name = "nexora-reasoning"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=60a9f8091f1859499ba7d3f277287b01a3e84b90#60a9f8091f1859499ba7d3f277287b01a3e84b90"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=2fe37155fd3296757601c75d979f82782c15895e#2fe37155fd3296757601c75d979f82782c15895e"
 dependencies = [
  "base64 0.22.1",
  "clap",
+ "nexora-mcp",
  "nexora-platform",
  "serde",
  "serde_json",
@@ -2340,11 +2341,10 @@ dependencies = [
 [[package]]
 name = "nexora-reasoning"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4#65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=60a9f8091f1859499ba7d3f277287b01a3e84b90#60a9f8091f1859499ba7d3f277287b01a3e84b90"
 dependencies = [
  "base64 0.22.1",
  "clap",
- "nexora-mcp",
  "nexora-platform",
  "serde",
  "serde_json",
