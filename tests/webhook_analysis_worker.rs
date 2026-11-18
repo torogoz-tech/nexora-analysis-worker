@@ -15,8 +15,8 @@ use nexora_analysis_store::GitNetworkPolicy;
 use nexora_analysis_worker::{RepositoryWorker, RepositoryWorkerSettings};
 use nexora_core::{RepositoryId, SnapshotId, TenantId};
 use nexora_platform::{
-    GitProvider, GitlabClientRegistration, GitlabWebhookRegistration, RepositoryJobState,
-    RepositoryRegistration,
+    GitProvider, GitlabClientRegistration, GitlabWebhookRegistration,
+    RepositoryAnalysisProfileChange, RepositoryJobState, RepositoryRegistration,
 };
 use nexora_platform_store::{PlatformStore, ProviderSecretContext, SecretGenerator};
 use nexora_runtime::DatabaseRuntime;
@@ -91,6 +91,20 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
             &RepositoryRegistration {
                 provider: GitProvider::Gitlab,
                 full_name: "fixture/source".into(),
+            },
+        )
+        .unwrap();
+    store
+        .change_repository_analysis_profile(
+            &ctx,
+            &project.id,
+            &repository.id,
+            &RepositoryAnalysisProfileChange {
+                expected_revision: 0,
+                profile_version_id: None,
+                reason: "Use the worker fixture profile".into(),
+                mode: None,
+                profile_version_ids: None,
             },
         )
         .unwrap();
