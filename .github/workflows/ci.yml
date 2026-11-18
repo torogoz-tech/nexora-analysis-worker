@@ -60,13 +60,15 @@ jobs:
         env:
           REDIS_PASSWORD: nexora-test-only
         run: |
+          redis_container="$(docker ps --filter 'ancestor=redis:7.4-alpine' --format '{{.ID}}' | head -n 1)"
+          test -n "$redis_container"
           for attempt in $(seq 1 30); do
-            if redis-cli -h 127.0.0.1 ping >/dev/null 2>&1; then
+            if docker exec "$redis_container" redis-cli ping >/dev/null 2>&1; then
               break
             fi
             sleep 2
           done
-          redis-cli -h 127.0.0.1 CONFIG SET requirepass "$REDIS_PASSWORD"
+          docker exec "$redis_container" redis-cli CONFIG SET requirepass "$REDIS_PASSWORD"
           secrets_directory="$RUNNER_TEMP/nexora-analysis-test-secrets"
           mkdir -m 700 "$secrets_directory"
           printf '%s' 'nexora-test-only' > "$secrets_directory/postgres_password"
