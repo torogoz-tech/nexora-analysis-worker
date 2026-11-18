@@ -2126,7 +2126,7 @@ dependencies = [
  "nexora-language",
  "nexora-platform",
  "nexora-platform-store",
- "nexora-reasoning 0.4.0 (git+https://github.com/torogoz-tech/nexora-api.git?rev=60a9f8091f1859499ba7d3f277287b01a3e84b90)",
+ "nexora-reasoning",
  "nexora-runtime",
  "nexora-source",
  "postgres",
@@ -2245,23 +2245,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nexora-mcp"
-version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=3fd01c3bf11f0db590f538a9c33b8c46e5be97b6#3fd01c3bf11f0db590f538a9c33b8c46e5be97b6"
-dependencies = [
- "nexora-core",
- "nexora-graph",
- "nexora-indexer",
- "nexora-language",
- "nexora-runtime",
- "nexora-storage",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tracing",
-]
-
-[[package]]
 name = "nexora-parser"
 version = "0.4.0"
 source = "git+https://github.com/torogoz-tech/nexora-analysis-engine.git?tag=0.4.0#63604ecbadb2b5fad2de57bb77210d1c16320406"
@@ -2289,7 +2272,7 @@ dependencies = [
 [[package]]
 name = "nexora-platform-store"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=3fd01c3bf11f0db590f538a9c33b8c46e5be97b6#3fd01c3bf11f0db590f538a9c33b8c46e5be97b6"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=7b964733de4d64b6b0480e9f8b12d8f2b65d9afb#7b964733de4d64b6b0480e9f8b12d8f2b65d9afb"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -2303,7 +2286,7 @@ dependencies = [
  "nexora-indexer",
  "nexora-language",
  "nexora-platform",
- "nexora-reasoning 0.4.0 (git+https://github.com/torogoz-tech/nexora-api.git?rev=3fd01c3bf11f0db590f538a9c33b8c46e5be97b6)",
+ "nexora-reasoning",
  "nexora-retrieval",
  "nexora-runtime",
  "nexora-source",
@@ -2324,24 +2307,7 @@ dependencies = [
 [[package]]
 name = "nexora-reasoning"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=3fd01c3bf11f0db590f538a9c33b8c46e5be97b6#3fd01c3bf11f0db590f538a9c33b8c46e5be97b6"
-dependencies = [
- "base64 0.22.1",
- "clap",
- "nexora-mcp",
- "nexora-platform",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "thiserror 2.0.21",
- "ureq",
- "zeroize",
-]
-
-[[package]]
-name = "nexora-reasoning"
-version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=60a9f8091f1859499ba7d3f277287b01a3e84b90#60a9f8091f1859499ba7d3f277287b01a3e84b90"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=7b964733de4d64b6b0480e9f8b12d8f2b65d9afb#7b964733de4d64b6b0480e9f8b12d8f2b65d9afb"
 dependencies = [
  "base64 0.22.1",
  "clap",
