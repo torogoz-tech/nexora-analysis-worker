@@ -1,6 +1,6 @@
 use crate::{
-    RepositoryWorkerAttempt, RepositoryWorkerOutcome, RepositoryWorkerSettings,
-    repository_worker_directory::RepositoryWorkerDirectory,
+    OpenAiEmbeddingClient, RepositoryWorkerAttempt, RepositoryWorkerOutcome,
+    RepositoryWorkerSettings, repository_worker_directory::RepositoryWorkerDirectory,
     repository_worker_heartbeat::RepositoryWorkerHeartbeat,
 };
 use nexora_analysis_store::{AnalysisStore, GitNetworkPolicy, RepositoryJobLease};
@@ -270,9 +270,12 @@ impl RepositoryWorker {
                 String::from_utf8(secret.to_vec())
                     .map_err(|_| RepositoryJobFailure::SourceUnavailable)?,
             );
-            let client = nexora_reasoning::OpenAiClient::new(key, service.settings.model.clone())
-                .and_then(|client| client.with_endpoint(&service.settings.endpoint))
-                .map_err(|_| RepositoryJobFailure::SourceInvalid)?;
+            let client = OpenAiEmbeddingClient::new(
+                key,
+                service.settings.model.clone(),
+                &service.settings.endpoint,
+            )
+            .map_err(|_| RepositoryJobFailure::SourceInvalid)?;
             let chunker = KnowledgeChunker::new(1800, 180)
                 .map_err(|_| RepositoryJobFailure::SourceInvalid)?;
             let mut chunks = Vec::new();

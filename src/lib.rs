@@ -1,3 +1,4 @@
+mod openai_embedding_client;
 mod rabbitmq_job_wakeup_consumer;
 mod rabbitmq_job_wakeup_delivery;
 mod rabbitmq_job_wakeup_topology;
@@ -12,6 +13,7 @@ mod repository_worker_profile;
 mod repository_worker_settings;
 mod worker_shutdown;
 
+pub(crate) use openai_embedding_client::OpenAiEmbeddingClient;
 pub(crate) use rabbitmq_job_wakeup_consumer::RabbitMqJobWakeupConsumer;
 pub(crate) use rabbitmq_job_wakeup_delivery::RabbitMqJobWakeupDelivery;
 pub(crate) use rabbitmq_job_wakeup_topology::RabbitMqJobWakeupTopology;
