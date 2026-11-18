@@ -3,14 +3,12 @@ use crate::{
     repository_worker_directory::RepositoryWorkerDirectory,
     repository_worker_heartbeat::RepositoryWorkerHeartbeat,
 };
+use nexora_analysis_store::{AnalysisStore, GitNetworkPolicy, RepositoryJobLease};
 use nexora_core::{NexoraError, RepositoryId, TenantId};
 use nexora_indexer::Indexer;
+use nexora_knowledge_store::KnowledgeChunker;
 use nexora_language::LanguageRegistry;
-use nexora_platform::{
-    InstallationService, OpenAiConfiguration, PlatformError, RepositoryBinding,
-    RepositoryJobFailure,
-};
-use nexora_platform_store::{GitNetworkPolicy, PlatformStore, RepositoryJobLease};
+use nexora_platform::{PlatformError, RepositoryBinding, RepositoryJobFailure};
 use nexora_runtime::{DatabaseConnections, DatabaseRuntime};
 use nexora_source::{
     GitFetchPolicy, GitFetcher, GitMaterializer, GitObjectReader, GitTransferLimits, SourceLimits,
@@ -28,7 +26,7 @@ pub struct RepositoryWorker {
     namespace: String,
     settings: RepositoryWorkerSettings,
     policy: GitNetworkPolicy,
-    store: PlatformStore,
+    store: AnalysisStore,
     runtime: DatabaseRuntime,
 }
 impl RepositoryWorker {
@@ -45,7 +43,7 @@ impl RepositoryWorker {
             namespace: namespace.into(),
             settings,
             policy,
-            store: PlatformStore::connect(connections, namespace)?,
+            store: AnalysisStore::connect(connections, namespace)?,
             runtime: DatabaseRuntime::connect(connections).map_err(|_| PlatformError::Storage)?,
         })
     }
@@ -56,7 +54,7 @@ impl RepositoryWorker {
         let Some(lease) = self.store.claim_repository_job(&self.settings.id, 300)? else {
             return Ok(None);
         };
-        let monitor = PlatformStore::connect(&self.connections, &self.namespace)?;
+        let monitor = AnalysisStore::connect(&self.connections, &self.namespace)?;
         let lost = AtomicBool::new(false);
         let result = std::thread::scope(|threads| {
             // Own the sender inside the scope: unwinding also disconnects the
@@ -244,11 +242,9 @@ impl RepositoryWorker {
             .map_err(|_| RepositoryJobFailure::StorageUnavailable)?;
         if let Some(service) = self
             .store
-            .service_runtime_settings(InstallationService::Openai)
+            .openai_runtime_settings()
             .map_err(Self::source_failure)?
         {
-            let configuration: OpenAiConfiguration = serde_json::from_value(service.settings)
-                .map_err(|_| RepositoryJobFailure::SourceInvalid)?;
             let secret = service
                 .secret
                 .ok_or(RepositoryJobFailure::SourceUnavailable)?;
@@ -256,19 +252,50 @@ impl RepositoryWorker {
                 String::from_utf8(secret.to_vec())
                     .map_err(|_| RepositoryJobFailure::SourceUnavailable)?,
             );
-            let client = nexora_reasoning::OpenAiClient::new(key, configuration.model)
-                .and_then(|client| client.with_endpoint(&configuration.endpoint))
+            let client = nexora_reasoning::OpenAiClient::new(key, service.settings.model.clone())
+                .and_then(|client| client.with_endpoint(&service.settings.endpoint))
                 .map_err(|_| RepositoryJobFailure::SourceInvalid)?;
-            self.store
-                .index_code_snapshot_embeddings(
-                    &lease.job.project_id,
-                    &lease.job.repository_id,
-                    &result.snapshot.id.0,
-                    &result.snapshot.sources,
-                    &client,
-                    &configuration.embedding_model,
-                )
-                .map_err(Self::source_failure)?;
+            let chunker = KnowledgeChunker::new(1800, 180)
+                .map_err(|_| RepositoryJobFailure::SourceInvalid)?;
+            let mut chunks = Vec::new();
+            for (path, content) in &result.snapshot.sources {
+                let records = chunker
+                    .chunk(path, 1, path, content)
+                    .map_err(|_| RepositoryJobFailure::SourceInvalid)?;
+                chunks.extend(records.into_iter().map(|record| (path.clone(), record)));
+            }
+            for batch in chunks.chunks(64) {
+                let inputs = batch
+                    .iter()
+                    .map(|(_, record)| record.content.clone())
+                    .collect::<Vec<_>>();
+                let vectors = client
+                    .embed_many(&service.settings.embedding_model, &inputs)
+                    .map_err(|_| RepositoryJobFailure::SourceUnavailable)?;
+                let records = batch
+                    .iter()
+                    .zip(vectors)
+                    .map(
+                        |((path, chunk), values)| nexora_analysis_store::CodeSnapshotEmbedding {
+                            path: path.clone(),
+                            sequence: chunk.sequence,
+                            title: chunk.title.clone(),
+                            content: chunk.content.clone(),
+                            content_hash: chunk.content_hash.clone(),
+                            model: service.settings.embedding_model.clone(),
+                            values,
+                        },
+                    )
+                    .collect::<Vec<_>>();
+                self.store
+                    .save_code_snapshot_embeddings(
+                        &lease.job.project_id,
+                        &lease.job.repository_id,
+                        &result.snapshot.id.0,
+                        &records,
+                    )
+                    .map_err(Self::source_failure)?;
+            }
         }
         match selection {
             Some(selection) => self

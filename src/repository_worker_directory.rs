@@ -1,5 +1,4 @@
 use nexora_platform::PlatformError;
-use nexora_platform_store::SecretGenerator;
 use std::path::{Path, PathBuf};
 
 pub(crate) struct RepositoryWorkerDirectory {
@@ -20,7 +19,13 @@ impl RepositoryWorkerDirectory {
                 return Err(PlatformError::Validation("worker root must be private"));
             }
         }
-        let path = root.join(SecretGenerator::id("attempt")?);
+        let mut random = [0u8; 16];
+        getrandom::fill(&mut random).map_err(|_| PlatformError::Unavailable)?;
+        let suffix = random
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        let path = root.join(format!("attempt-{suffix}"));
         let mut builder = std::fs::DirBuilder::new();
         #[cfg(unix)]
         {

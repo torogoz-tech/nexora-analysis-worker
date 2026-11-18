@@ -8,13 +8,15 @@ license = "MIT"
 clap = { version = "4", features = ["derive"] }
 futures-lite = "2"
 lapin = { version = "4.12.3", default-features = false, features = ["rustls--ring", "tokio"] }
+getrandom = "0.3"
+nexora-analysis-store = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "bc8404db8e3c4daacee6627a6da6bad49915ed9d" }
 nexora-core = { git = "https://github.com/torogoz-tech/nexora-platform-contracts.git", tag = "0.4.0" }
 nexora-indexer = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
+nexora-knowledge-store = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "bc8404db8e3c4daacee6627a6da6bad49915ed9d" }
 nexora-language = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
 nexora-platform = { git = "https://github.com/torogoz-tech/nexora-platform-contracts.git", tag = "0.4.0" }
-nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "60a9f8091f1859499ba7d3f277287b01a3e84b90" }
-nexora-reasoning = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "60a9f8091f1859499ba7d3f277287b01a3e84b90" }
-nexora-runtime = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "1cedd26f9af3798d3d7475cc3190ac961726f7fe" }
+nexora-reasoning = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "60a9f8091f1859499ba7d3f277287b01a3e84b90", default-features = false }
+nexora-runtime = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "bc8404db8e3c4daacee6627a6da6bad49915ed9d" }
 nexora-source = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -22,6 +24,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "tim
 zeroize = "1"
 
 [dev-dependencies]
+nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "65150b54f33f1b6daa4b1d0192b4f3e6a20f64c4" }
 serde_json = "1"
 postgres = { version = "0.19", features = ["with-serde_json-1"] }
 base64 = "0.22"

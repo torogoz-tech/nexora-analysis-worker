@@ -1,4 +1,6 @@
 #![cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "support/database_connections.rs"]
+mod database_connections;
 #[path = "support/git_fetch_pause.rs"]
 mod git_fetch_pause;
 #[path = "support/git_fixture.rs"]
@@ -10,15 +12,13 @@ mod test_directory;
 use git_fetch_pause::GitFetchPause;
 use git_fixture::GitFixture;
 use gitlab_source_fixture::GitlabSourceFixture;
+use nexora_analysis_store::GitNetworkPolicy;
 use nexora_analysis_worker::RepositoryWorker;
 use nexora_platform::{
     GitProvider, GitlabClientRegistration, RepositoryJobKind, RepositoryJobRequest,
     RepositoryJobState, RepositoryRegistration,
 };
-use nexora_platform_store::{
-    GitNetworkPolicy, PlatformStore, ProviderSecretContext, SecretGenerator,
-};
-use nexora_runtime::DatabaseConnections;
+use nexora_platform_store::{PlatformStore, ProviderSecretContext, SecretGenerator};
 use serde_json::json;
 use std::{
     os::unix::fs::DirBuilderExt,
@@ -43,8 +43,7 @@ fn worker_renews_its_lease_while_authenticated_git_fetch_is_blocked() {
     git.run(&["symbolic-ref", "HEAD", "refs/heads/main"], b"");
     let provider = GitlabSourceFixture::start(&git, &commit);
     provider.control(json!({}));
-    let config =
-        DatabaseConnections::load(Path::new("../../.nexora/local/connections.json")).unwrap();
+    let config = database_connections::load();
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -62,6 +61,8 @@ fn worker_renews_its_lease_while_authenticated_git_fetch_is_blocked() {
         gitlab_origin: provider.origin().into(),
         ..GitNetworkPolicy::default()
     };
+    let api_policy: nexora_platform_store::GitNetworkPolicy =
+        serde_json::from_value(serde_json::to_value(&policy).unwrap()).unwrap();
     let client_secret = Zeroizing::new(SecretGenerator::token("fixture_client_secret").unwrap());
     store
         .configure_gitlab(
@@ -73,7 +74,7 @@ fn worker_renews_its_lease_while_authenticated_git_fetch_is_blocked() {
                 enabled: true,
                 expected_revision: 0,
             },
-            &policy,
+            &api_policy,
         )
         .unwrap();
     let project = store.create_project(&ctx, "Source", None).unwrap();
@@ -159,7 +160,7 @@ fn worker_renews_its_lease_while_authenticated_git_fetch_is_blocked() {
     let managed = git.directory.path().canonicalize().unwrap().join("managed");
     let mut directory = std::fs::DirBuilder::new();
     directory.mode(0o700).create(&managed).unwrap();
-    let language_directory = Path::new("../../languages/javascript")
+    let language_directory = Path::new("tests/fixtures/languages/javascript")
         .canonicalize()
         .unwrap();
 

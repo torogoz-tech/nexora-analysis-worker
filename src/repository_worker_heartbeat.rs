@@ -1,4 +1,4 @@
-use nexora_platform_store::{PlatformStore, RepositoryJobLease};
+use nexora_analysis_store::{AnalysisStore, RepositoryJobLease};
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -10,7 +10,7 @@ use std::{
 pub(crate) struct RepositoryWorkerHeartbeat;
 impl RepositoryWorkerHeartbeat {
     pub fn run(
-        mut store: PlatformStore,
+        mut store: AnalysisStore,
         lease: &RepositoryJobLease,
         stop: Receiver<()>,
         lost: &AtomicBool,

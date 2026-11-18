@@ -1,4 +1,6 @@
 #![cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "support/database_connections.rs"]
+mod database_connections;
 #[path = "support/git_fixture.rs"]
 mod git_fixture;
 #[path = "support/gitlab_source_fixture.rs"]
@@ -9,16 +11,15 @@ mod test_directory;
 mod webhook_test_signer;
 use git_fixture::GitFixture;
 use gitlab_source_fixture::GitlabSourceFixture;
+use nexora_analysis_store::GitNetworkPolicy;
 use nexora_analysis_worker::{RepositoryWorker, RepositoryWorkerSettings};
 use nexora_core::{RepositoryId, SnapshotId, TenantId};
 use nexora_platform::{
     GitProvider, GitlabClientRegistration, GitlabWebhookRegistration, RepositoryJobState,
     RepositoryRegistration,
 };
-use nexora_platform_store::{
-    GitNetworkPolicy, PlatformStore, ProviderSecretContext, SecretGenerator,
-};
-use nexora_runtime::{DatabaseConnections, DatabaseRuntime};
+use nexora_platform_store::{PlatformStore, ProviderSecretContext, SecretGenerator};
+use nexora_runtime::DatabaseRuntime;
 use serde_json::json;
 use std::{
     os::unix::fs::DirBuilderExt,
@@ -43,8 +44,7 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
     git.run(&["update-ref", "refs/heads/main", &commit], b"");
     git.run(&["symbolic-ref", "HEAD", "refs/heads/main"], b"");
     let provider = GitlabSourceFixture::start(&git, &commit);
-    let config =
-        DatabaseConnections::load(Path::new("../../.nexora/local/connections.json")).unwrap();
+    let config = database_connections::load();
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -62,6 +62,8 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
         gitlab_origin: provider.origin().into(),
         ..GitNetworkPolicy::default()
     };
+    let api_policy: nexora_platform_store::GitNetworkPolicy =
+        serde_json::from_value(serde_json::to_value(&policy).unwrap()).unwrap();
     let client_secret = Zeroizing::new(SecretGenerator::token("fixture_client_secret").unwrap());
     store
         .configure_gitlab(
@@ -73,7 +75,7 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
                 enabled: true,
                 expected_revision: 0,
             },
-            &policy,
+            &api_policy,
         )
         .unwrap();
     let project = store.create_project(&ctx, "Source", None).unwrap();
@@ -138,7 +140,7 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
                 signing_token: signer.token(),
                 expected_revision: 2,
             },
-            &policy,
+            &api_policy,
         )
         .unwrap();
     let body = serde_json::to_vec(
@@ -148,13 +150,13 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
     let proof = signer.proof("automatic-analysis", &body);
     assert!(
         !store
-            .receive_gitlab_webhook(&hook.id, &proof, &body, &policy)
+            .receive_gitlab_webhook(&hook.id, &proof, &body, &api_policy)
             .unwrap()
             .duplicate
     );
     assert!(
         store
-            .receive_gitlab_webhook(&hook.id, &proof, &body, &policy)
+            .receive_gitlab_webhook(&hook.id, &proof, &body, &api_policy)
             .unwrap()
             .duplicate
     );
@@ -172,7 +174,7 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
     let managed = git.directory.path().canonicalize().unwrap().join("managed");
     let mut directory = std::fs::DirBuilder::new();
     directory.mode(0o700).create(&managed).unwrap();
-    let language_directory = Path::new("../../languages/javascript")
+    let language_directory = Path::new("tests/fixtures/languages/javascript")
         .canonicalize()
         .unwrap();
     let settings: RepositoryWorkerSettings = serde_json::from_value(json!({
@@ -222,7 +224,7 @@ fn signed_webhook_automatically_fetches_analyzes_and_publishes_exact_commit_with
     provider.control(json!({"deny_repository":true}));
     let proof = signer.proof("automatic-provider-denial", &body);
     store
-        .receive_gitlab_webhook(&hook.id, &proof, &body, &policy)
+        .receive_gitlab_webhook(&hook.id, &proof, &body, &api_policy)
         .unwrap();
     let denied = worker.run_once().unwrap().unwrap();
     assert_eq!(denied.state, RepositoryJobState::Failed);

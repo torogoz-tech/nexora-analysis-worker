@@ -1,4 +1,6 @@
 #![cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "support/database_connections.rs"]
+mod database_connections;
 #[path = "support/git_fixture.rs"]
 mod git_fixture;
 #[path = "support/github_source_fixture.rs"]
@@ -8,12 +10,11 @@ mod test_directory;
 use git_fixture::GitFixture;
 use github_source_fixture::GithubSourceFixture;
 use hmac::{Hmac, Mac};
+use nexora_analysis_store::GitNetworkPolicy;
 use nexora_analysis_worker::{RepositoryWorker, RepositoryWorkerSettings};
 use nexora_platform::{GitProvider, RepositoryJobState, RepositoryRegistration};
-use nexora_platform_store::{
-    GitNetworkPolicy, PlatformStore, ProviderSecretContext, SecretGenerator, WebhookProof,
-};
-use nexora_runtime::{DatabaseConnections, DatabaseRuntime};
+use nexora_platform_store::{PlatformStore, ProviderSecretContext, SecretGenerator, WebhookProof};
+use nexora_runtime::DatabaseRuntime;
 use serde_json::json;
 use sha2::Sha256;
 use std::{
@@ -38,8 +39,7 @@ fn github_push_queues_exact_commit_and_worker_publishes_without_mcp_or_live_deve
     git.run(&["update-ref", "refs/heads/main", &commit], b"");
     git.run(&["symbolic-ref", "HEAD", "refs/heads/main"], b"");
     let provider = GithubSourceFixture::start(&git, &commit);
-    let config =
-        DatabaseConnections::load(Path::new("../../.nexora/local/connections.json")).unwrap();
+    let config = database_connections::load();
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -63,10 +63,12 @@ fn github_push_queues_exact_commit_and_worker_publishes_without_mcp_or_live_deve
         github_api_origin: provider.origin().into(),
         ..GitNetworkPolicy::default()
     };
+    let api_policy: nexora_platform_store::GitNetworkPolicy =
+        serde_json::from_value(serde_json::to_value(&policy).unwrap()).unwrap();
     let registration = provider.registration(&policy.callback_origin);
     let webhook_secret = Zeroizing::new(registration.webhook_secret.clone());
     store
-        .configure_github(&ctx, &registration, &policy)
+        .configure_github(&ctx, &registration, &api_policy)
         .unwrap();
     let project = store.create_project(&ctx, "Source", None).unwrap();
     let repository = store
@@ -152,11 +154,11 @@ fn github_push_queues_exact_commit_and_worker_publishes_without_mcp_or_live_deve
         timestamp: None,
     };
     store
-        .receive_github_webhook(&proof("automatic-github"), &body, &policy)
+        .receive_github_webhook(&proof("automatic-github"), &body, &api_policy)
         .unwrap();
     assert!(
         store
-            .receive_github_webhook(&proof("automatic-github"), &body, &policy)
+            .receive_github_webhook(&proof("automatic-github"), &body, &api_policy)
             .unwrap()
             .duplicate
     );
@@ -168,7 +170,7 @@ fn github_push_queues_exact_commit_and_worker_publishes_without_mcp_or_live_deve
     let managed = git.directory.path().canonicalize().unwrap().join("managed");
     let mut directory = std::fs::DirBuilder::new();
     directory.mode(0o700).create(&managed).unwrap();
-    let language = Path::new("../../languages/javascript")
+    let language = Path::new("tests/fixtures/languages/javascript")
         .canonicalize()
         .unwrap();
     let settings:RepositoryWorkerSettings=serde_json::from_value(json!({"id":"github-automatic-worker","source_root":managed,"git_binary":"/usr/bin/git","profiles":{(repository.id.clone()):{"directory":language,"language_id":"javascript"}}})).unwrap();
@@ -255,7 +257,7 @@ fn github_push_queues_exact_commit_and_worker_publishes_without_mcp_or_live_deve
     );
     provider.control(json!({"rate_limit":true}));
     store
-        .receive_github_webhook(&proof("automatic-github-retry"), &body, &policy)
+        .receive_github_webhook(&proof("automatic-github-retry"), &body, &api_policy)
         .unwrap();
     let retry = worker.run_once().unwrap().unwrap();
     assert_eq!(retry.state, RepositoryJobState::Queued);

@@ -1,7 +1,7 @@
 use crate::worker_shutdown::WorkerShutdown;
 use crate::{RabbitMqJobWakeupConsumer, RepositoryWorker, RepositoryWorkerSettings};
+use nexora_analysis_store::GitNetworkPolicy;
 use nexora_platform::{JobKind, PlatformError};
-use nexora_platform_store::GitNetworkPolicy;
 use nexora_runtime::DatabaseConnections;
 use std::{path::PathBuf, sync::mpsc, time::Duration};
 use tokio::sync::oneshot;

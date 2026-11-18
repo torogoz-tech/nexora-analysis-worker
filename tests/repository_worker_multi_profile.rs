@@ -1,4 +1,6 @@
 #![cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "support/database_connections.rs"]
+mod database_connections;
 #[path = "support/git_fixture.rs"]
 mod git_fixture;
 #[path = "support/gitlab_source_fixture.rs"]
@@ -7,16 +9,15 @@ mod gitlab_source_fixture;
 mod test_directory;
 use git_fixture::GitFixture;
 use gitlab_source_fixture::GitlabSourceFixture;
+use nexora_analysis_store::GitNetworkPolicy;
 use nexora_analysis_worker::RepositoryWorker;
 use nexora_core::{RepositoryId, SnapshotId, TenantId};
 use nexora_platform::{
     GitProvider, GitlabClientRegistration, RepositoryJobKind, RepositoryJobRequest,
     RepositoryJobState, RepositoryRegistration,
 };
-use nexora_platform_store::{
-    GitNetworkPolicy, PlatformStore, ProviderSecretContext, SecretGenerator,
-};
-use nexora_runtime::{DatabaseConnections, DatabaseRuntime};
+use nexora_platform_store::{PlatformStore, ProviderSecretContext, SecretGenerator};
+use nexora_runtime::DatabaseRuntime;
 use serde_json::json;
 use std::{
     os::unix::fs::DirBuilderExt,
@@ -45,8 +46,7 @@ fn worker_publishes_one_mixed_snapshot_with_frozen_candidates_and_safe_mcp_prove
     git.run(&["symbolic-ref", "HEAD", "refs/heads/main"], b"");
     let provider = GitlabSourceFixture::start(&git, &commit);
     provider.control(json!({}));
-    let config =
-        DatabaseConnections::load(Path::new("../../.nexora/local/connections.json")).unwrap();
+    let config = database_connections::load();
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -64,6 +64,8 @@ fn worker_publishes_one_mixed_snapshot_with_frozen_candidates_and_safe_mcp_prove
         gitlab_origin: provider.origin().into(),
         ..GitNetworkPolicy::default()
     };
+    let api_policy: nexora_platform_store::GitNetworkPolicy =
+        serde_json::from_value(serde_json::to_value(&policy).unwrap()).unwrap();
     let client_secret = Zeroizing::new(SecretGenerator::token("fixture_client_secret").unwrap());
     store
         .configure_gitlab(
@@ -75,7 +77,7 @@ fn worker_publishes_one_mixed_snapshot_with_frozen_candidates_and_safe_mcp_prove
                 enabled: true,
                 expected_revision: 0,
             },
-            &policy,
+            &api_policy,
         )
         .unwrap();
     let project = store.create_project(&ctx, "Source", None).unwrap();
@@ -133,7 +135,7 @@ fn worker_publishes_one_mixed_snapshot_with_frozen_candidates_and_safe_mcp_prove
     let mut imported = Vec::new();
     for language in ["javascript", "lua"] {
         let package = nexora_language::AnalysisProfilePackage::from_catalog(
-            &Path::new("../../languages").join(language),
+            &Path::new("tests/fixtures/languages").join(language),
             language.into(),
             format!("mixed-{language}"),
             "1.9.0".into(),
@@ -160,7 +162,7 @@ fn worker_publishes_one_mixed_snapshot_with_frozen_candidates_and_safe_mcp_prove
         .unwrap();
     // Importing a newer model cannot change a queued job's candidate set.
     let newer = nexora_language::AnalysisProfilePackage::from_catalog(
-        Path::new("../../languages/javascript"),
+        Path::new("tests/fixtures/languages/javascript"),
         "javascript".into(),
         "mixed-javascript".into(),
         "1.10.0".into(),
