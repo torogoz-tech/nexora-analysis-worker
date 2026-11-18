@@ -101,7 +101,12 @@ impl RepositoryWorker {
             PlatformError::Unavailable => RepositoryJobFailure::SourceUnavailable,
             PlatformError::TooManyRequests => RepositoryJobFailure::SourceAccessDenied,
             PlatformError::Storage => RepositoryJobFailure::StorageUnavailable,
-            PlatformError::Conflict(_) | PlatformError::Validation(_) => {
+            PlatformError::Conflict(reason) => {
+                eprintln!("repository source conflict: {reason}");
+                RepositoryJobFailure::SourceInvalid
+            }
+            PlatformError::Validation(reason) => {
+                eprintln!("repository source validation failed: {reason}");
                 RepositoryJobFailure::SourceInvalid
             }
         }
