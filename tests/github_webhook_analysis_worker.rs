@@ -51,6 +51,10 @@ fn github_push_queues_exact_commit_and_worker_publishes_without_mcp_or_live_deve
     store
         .bootstrap("Source plan fixture", "owner", &password, "Owner")
         .unwrap();
+    assert!(store.authentication_policy().unwrap().local_enabled);
+    store
+        .consume_authentication_attempt("github-source-fixture-preflight", 10, 900)
+        .unwrap();
     let session = store.login("owner", &password).unwrap();
     let verified = store
         .identity_gate(&session.access_token, "skip", "")
