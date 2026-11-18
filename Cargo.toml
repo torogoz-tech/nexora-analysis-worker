@@ -8,14 +8,14 @@ license = "MIT"
 clap = { version = "4", features = ["derive"] }
 futures-lite = "2"
 lapin = { version = "4.12.3", default-features = false, features = ["rustls--ring", "tokio"] }
-nexora-core = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
-nexora-indexer = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
-nexora-language = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
-nexora-platform = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
-nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
-nexora-reasoning = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
-nexora-runtime = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
-nexora-source = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "b595a23ef9a4e3c2ff63fa15dcfdaee9bc7291b1" }
+nexora-core = { git = "https://github.com/torogoz-tech/nexora-platform-contracts.git", tag = "0.4.0" }
+nexora-indexer = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
+nexora-language = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
+nexora-platform = { git = "https://github.com/torogoz-tech/nexora-platform-contracts.git", tag = "0.4.0" }
+nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "60a9f8091f1859499ba7d3f277287b01a3e84b90" }
+nexora-reasoning = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "60a9f8091f1859499ba7d3f277287b01a3e84b90" }
+nexora-runtime = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "1cedd26f9af3798d3d7475cc3190ac961726f7fe" }
+nexora-source = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "time", "sync"] }
