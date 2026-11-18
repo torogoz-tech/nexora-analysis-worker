@@ -251,7 +251,12 @@ fn worker_processes_durable_jobs_and_preserves_publication_on_source_failure() {
         RepositoryWorker::connect(&config, &namespace, managed_settings, policy.clone()).unwrap();
     let managed_result = managed_worker.run_once().unwrap().unwrap();
     assert_eq!(managed_result.id, managed_job.id);
-    assert_eq!(managed_result.state, RepositoryJobState::Succeeded);
+    assert_eq!(
+        managed_result.state,
+        RepositoryJobState::Succeeded,
+        "managed profile job failed with {:?}",
+        managed_result.error_code
+    );
     snapshot = SnapshotId(managed_result.snapshot_id.clone().unwrap());
     // A real graph storage outage during staging must not be classified as
     // invalid source/analysis, and must preserve the last published binding.
