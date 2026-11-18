@@ -90,6 +90,10 @@ jobs:
           EOF
           chmod 600 "$RUNNER_TEMP/nexora-analysis-test-connections.json"
           echo "NEXORA_TEST_CONNECTIONS=$RUNNER_TEMP/nexora-analysis-test-connections.json" >> "$GITHUB_ENV"
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: "0.13.9"
+          python-version: "3.11"
       - run: cargo fmt --all -- --check
       - run: cargo check --locked
       - run: cargo test --locked -- --include-ignored --test-threads=1
