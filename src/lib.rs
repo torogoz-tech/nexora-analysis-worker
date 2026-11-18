@@ -1,0 +1,25 @@
+mod openai_embedding_client;
+mod rabbitmq_job_wakeup_consumer;
+mod rabbitmq_job_wakeup_delivery;
+mod rabbitmq_job_wakeup_topology;
+mod repository_worker;
+mod repository_worker_analysis_profiles;
+mod repository_worker_attempt;
+mod repository_worker_directory;
+mod repository_worker_heartbeat;
+mod repository_worker_host;
+mod repository_worker_outcome;
+mod repository_worker_profile;
+mod repository_worker_settings;
+mod worker_shutdown;
+
+pub(crate) use openai_embedding_client::OpenAiEmbeddingClient;
+pub(crate) use rabbitmq_job_wakeup_consumer::RabbitMqJobWakeupConsumer;
+pub(crate) use rabbitmq_job_wakeup_delivery::RabbitMqJobWakeupDelivery;
+pub(crate) use rabbitmq_job_wakeup_topology::RabbitMqJobWakeupTopology;
+pub use repository_worker::RepositoryWorker;
+pub(crate) use repository_worker_attempt::RepositoryWorkerAttempt;
+pub use repository_worker_host::RepositoryWorkerHost;
+pub use repository_worker_outcome::RepositoryWorkerOutcome;
+pub use repository_worker_profile::RepositoryWorkerProfile;
+pub use repository_worker_settings::RepositoryWorkerSettings;
