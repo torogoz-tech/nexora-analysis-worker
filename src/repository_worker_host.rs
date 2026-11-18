@@ -188,8 +188,16 @@ impl RepositoryWorkerHost {
     }
 
     fn drain_analysis_jobs(worker: &mut RepositoryWorker) -> Result<(), PlatformError> {
-        while worker.run_analysis_once()?.is_some() {}
-        Ok(())
+        loop {
+            match worker.run_analysis_once() {
+                Ok(Some(_)) => {}
+                Ok(None) => return Ok(()),
+                Err(PlatformError::Conflict(
+                    "job lease is no longer current" | "job lease expired during failure recording",
+                )) => {}
+                Err(error) => return Err(error),
+            }
+        }
     }
 
     async fn request_analysis_drain(
