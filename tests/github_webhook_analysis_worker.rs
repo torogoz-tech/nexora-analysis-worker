@@ -15,14 +15,34 @@ use nexora_analysis_worker::{RepositoryWorker, RepositoryWorkerSettings};
 use nexora_platform::{GitProvider, RepositoryJobState, RepositoryRegistration};
 use nexora_platform_store::{PlatformStore, ProviderSecretContext, SecretGenerator, WebhookProof};
 use nexora_runtime::DatabaseRuntime;
+use postgres::{Config as PostgresConfig, NoTls};
 use serde_json::json;
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use std::{
     os::unix::fs::DirBuilderExt,
     path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
 use zeroize::Zeroizing;
+
+fn postgres_probe(
+    config: &nexora_runtime::DatabaseConnections,
+    namespace: &str,
+) -> postgres::Client {
+    let password =
+        std::fs::read_to_string(config.secrets_directory.join("postgres_password")).unwrap();
+    PostgresConfig::new()
+        .host(&config.host)
+        .port(config.postgres_port)
+        .user(&config.postgres_user)
+        .password(password.trim())
+        .dbname(&config.postgres_database)
+        .options(&format!(
+            "-c search_path={namespace},nexora_platform,pg_catalog"
+        ))
+        .connect(NoTls)
+        .unwrap()
+}
 
 #[test]
 #[ignore = "requires local databases; provider proof through encrypted credential, Git fetch, exact source and scoped publication"]
@@ -52,6 +72,21 @@ fn github_push_queues_exact_commit_and_worker_publishes_without_mcp_or_live_deve
         .bootstrap("Source plan fixture", "owner", &password, "Owner")
         .unwrap();
     assert!(store.authentication_policy().unwrap().local_enabled);
+    let mut probe = postgres_probe(&config, &namespace);
+    probe
+        .execute(
+            "DELETE FROM authentication_attempt_limits WHERE window_started_at<clock_timestamp()-interval '1 day'",
+            &[],
+        )
+        .unwrap();
+    let probe_digest =
+        Sha256::digest("authentication-attempt:github-source-fixture-direct-probe").to_vec();
+    probe
+        .query_one(
+            "INSERT INTO authentication_attempt_limits(key_digest,window_started_at,attempts) VALUES($1,clock_timestamp(),1) ON CONFLICT(key_digest) DO UPDATE SET window_started_at=CASE WHEN authentication_attempt_limits.window_started_at<=clock_timestamp()-make_interval(secs => $2::double precision) THEN clock_timestamp() ELSE authentication_attempt_limits.window_started_at END,attempts=CASE WHEN authentication_attempt_limits.window_started_at<=clock_timestamp()-make_interval(secs => $2::double precision) THEN 1 ELSE authentication_attempt_limits.attempts+1 END RETURNING attempts",
+            &[&probe_digest, &900_i64],
+        )
+        .unwrap();
     store
         .consume_authentication_attempt("github-source-fixture-preflight", 10, 900)
         .unwrap();
