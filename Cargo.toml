@@ -9,14 +9,14 @@ clap = { version = "4", features = ["derive"] }
 futures-lite = "2"
 lapin = { version = "4.12.3", default-features = false, features = ["rustls--ring", "tokio"] }
 getrandom = "0.3"
-nexora-analysis-store = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "bc8404db8e3c4daacee6627a6da6bad49915ed9d" }
+nexora-analysis-store = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "2c96d6e74841ef04506e94bee0ea90d86aaf04ca" }
 nexora-core = { git = "https://github.com/torogoz-tech/nexora-platform-contracts.git", tag = "0.4.0" }
 nexora-indexer = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
-nexora-knowledge-store = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "bc8404db8e3c4daacee6627a6da6bad49915ed9d" }
+nexora-knowledge-store = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "2c96d6e74841ef04506e94bee0ea90d86aaf04ca" }
 nexora-language = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
 nexora-platform = { git = "https://github.com/torogoz-tech/nexora-platform-contracts.git", tag = "0.4.0" }
-nexora-reasoning = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "0821895ca8eefa315628585f767873c1b547da2d", default-features = false }
-nexora-runtime = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "bc8404db8e3c4daacee6627a6da6bad49915ed9d" }
+nexora-reasoning = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "3d7349145745bedbdee2af7508efebb70c2a9c7b", default-features = false }
+nexora-runtime = { git = "https://github.com/torogoz-tech/nexora-job-store.git", rev = "2c96d6e74841ef04506e94bee0ea90d86aaf04ca" }
 nexora-source = { git = "https://github.com/torogoz-tech/nexora-analysis-engine.git", tag = "0.4.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -24,7 +24,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "tim
 zeroize = "1"
 
 [dev-dependencies]
-nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "0821895ca8eefa315628585f767873c1b547da2d" }
+nexora-platform-store = { git = "https://github.com/torogoz-tech/nexora-api.git", rev = "3d7349145745bedbdee2af7508efebb70c2a9c7b" }
 serde_json = "1"
 postgres = { version = "0.19", features = ["with-serde_json-1"] }
 base64 = "0.22"
