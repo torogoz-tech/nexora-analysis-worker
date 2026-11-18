@@ -2272,7 +2272,7 @@ dependencies = [
 [[package]]
 name = "nexora-platform-store"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=7b964733de4d64b6b0480e9f8b12d8f2b65d9afb#7b964733de4d64b6b0480e9f8b12d8f2b65d9afb"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=0821895ca8eefa315628585f767873c1b547da2d#0821895ca8eefa315628585f767873c1b547da2d"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -2307,7 +2307,7 @@ dependencies = [
 [[package]]
 name = "nexora-reasoning"
 version = "0.4.0"
-source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=7b964733de4d64b6b0480e9f8b12d8f2b65d9afb#7b964733de4d64b6b0480e9f8b12d8f2b65d9afb"
+source = "git+https://github.com/torogoz-tech/nexora-api.git?rev=0821895ca8eefa315628585f767873c1b547da2d#0821895ca8eefa315628585f767873c1b547da2d"
 dependencies = [
  "base64 0.22.1",
  "clap",
