@@ -54,7 +54,12 @@ fn worker_processes_durable_jobs_and_preserves_publication_on_source_failure() {
         .bootstrap("Source plan fixture", "owner", &password, "Owner")
         .unwrap();
     let session = store.login("owner", &password).unwrap();
-    let ctx = store.authenticate(&session.access_token).unwrap();
+    let verified = store
+        .identity_gate(&session.access_token, "skip", "")
+        .unwrap();
+    let ctx = store
+        .authenticate(verified["access_token"].as_str().unwrap())
+        .unwrap();
     let policy = GitNetworkPolicy {
         gitlab_origin: provider.origin().into(),
         ..GitNetworkPolicy::default()
